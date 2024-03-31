@@ -29,8 +29,10 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.contextu.al.BuildConfig
 import com.contextu.al.Contextual
+import com.contextu.al.barcodescanner.BarcodeScannerGuideBlock
 import com.contextu.al.carousel.CarouselAction
 import com.contextu.al.carousel.CarouselComponent
+import com.contextu.al.circlevideo.CircleVideoGuideBlock
 import com.contextu.al.confetti.ConfettiGuideBlocks
 import com.contextu.al.core.CtxEventObserver
 import com.contextu.al.customtip.CustomGBTip
@@ -63,13 +65,13 @@ class MainActivity : AppCompatActivity()
     {
         super.onCreate(savedInstanceState)
 
-        Contextual.init(
-                application,
+        Contextual.init(application,
                 getString(R.string.app_key),
                 object : CtxEventObserver
                 {
                     override fun onInstallRegistered(installId: UUID, context: Context)
                     {
+
                         val localDateTime = LocalDateTime.now()
                         val dayOfWeek = localDateTime.dayOfWeek.getDisplayName(
                                 TextStyle.SHORT,
@@ -195,9 +197,8 @@ class MainActivity : AppCompatActivity()
         Contextual.registerGuideBlock(confettiGuideBlocks).observe(this) { contextualContainer ->
             if (contextualContainer.guidePayload.guide.guideBlock.contentEquals(confettiGuideBlocks))
             {
-                val confettiView = ConfettiGuideBlocks(this@MainActivity)
-                confettiView.show(
-                        {},
+                val confettiView = ConfettiGuideBlocks(this@MainActivity,contextualContainer)
+                confettiView.show({},
                         {
                             val baseView = findViewById<View>(android.R.id.content)
                             contextualContainer.guidePayload.nextStep.onClick(baseView)
@@ -209,52 +210,21 @@ class MainActivity : AppCompatActivity()
         Contextual.registerGuideBlock(fancyAnnouncement).observe(this) { contextualContainer ->
             if (contextualContainer.guidePayload.guide.guideBlock.contentEquals(fancyAnnouncement))
             {
-                val title = contextualContainer.guidePayload.guide.titleText.text ?: ""
-                val message = contextualContainer.guidePayload.guide.contentText.text ?: ""
 
-                val buttons = contextualContainer.guidePayload.guide.buttons
-                var prevButtonText = "back"
-                var nextButtonText = "next"
 
-                buttons.prevButton?.let { button ->
-                    prevButtonText = button.text ?: "back"
-                }
 
-                buttons.nextButton?.let { button ->
-                    nextButtonText = button.text ?: "next"
-                }
-                val negativeText = prevButtonText
-                val positiveText = nextButtonText
-
-                var imageURL: String? = null
-
-                val images = contextualContainer.guidePayload.guide.images
-                if (images.isNotEmpty())
-                {
-                    imageURL = images[0].resource
-                }
-
-                val guideBlock = FancyAnnouncementGuideBlocks(this)
-
-                guideBlock.show(title,
-                        message,
-                        negativeText,
+                val guideBlock = FancyAnnouncementGuideBlocks(this,contextualContainer)
+                guideBlock.show(
                         { v: View? ->
-                            contextualContainer.guidePayload.prevStep.onClick(v)
-                            contextualContainer.guidePayload.dismissGuide.onClick(v)
                             guideBlock.dismiss()
                             contextualContainer.tagManager.setStringTag(
                                     "test_key",
                                     "test_value"
                             )
                         },
-                        positiveText,
                         { v: View? ->
-                            contextualContainer.guidePayload.nextStep.onClick(v)
-                            contextualContainer.guidePayload.dismissGuide.onClick(v)
                             guideBlock.dismiss()
-                        },
-                        imageURL ?: ""
+                        }
                 )
             }
         } //
@@ -283,24 +253,39 @@ class MainActivity : AppCompatActivity()
         showTestTipGuideBlock()
         launchBarcode()
         launchCarousel()
+        launchCircleVideo()
+    }
 
+
+    fun launchCircleVideo()
+    {
+
+        val circleVideoGuideBlocks = "CircleVideo"
+        Contextual.registerGuideBlock(circleVideoGuideBlocks).observe(this){
+            contextualContainer ->
+            if(contextualContainer.guidePayload.guide.guideBlock.contentEquals(circleVideoGuideBlocks)){
+                val circleVideoView = CircleVideoGuideBlock(this@MainActivity,contextualContainer)
+                val contentUrl:String = contextualContainer.guidePayload.guide.contentText.text ?: ""
+                circleVideoView.show(contentUrl)
+            }
+        }
     }
 
     fun launchBarcode()
     {
 
-        //        val barCodeScanner = "BarCodeScanner"
-        //        Contextual.registerGuideBlock(barCodeScanner).observe(this) { contextualContainer ->
-        //            if (contextualContainer.guidePayload.guide.guideBlock.contentEquals(barCodeScanner)) {
-        //                BarcodeScannerGuideBlock(
-        //                    (this)
-        //                ) { barcodeResult ->
-        //
-        //                }.also {
-        //                    it.showGuideBlock(contextualContainer)
-        //                }
-        //            }
-        //        }
+                val barCodeScanner = "BarCodeScanner"
+                Contextual.registerGuideBlock(barCodeScanner).observe(this) { contextualContainer ->
+                    if (contextualContainer.guidePayload.guide.guideBlock.contentEquals(barCodeScanner)) {
+                        BarcodeScannerGuideBlock(
+                            (this)
+                        ) { barcodeResult ->
+
+                        }.also {
+                            it.showGuideBlock(contextualContainer)
+                        }
+                    }
+                }
     }
 
     fun launchCarousel()
@@ -350,8 +335,7 @@ class MainActivity : AppCompatActivity()
                     setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
                     setContent {
                         MaterialTheme {
-                            NPSRatingBarGuideBlock().show(
-                                    contextualContainer = contextualContainer,
+                            NPSRatingBarGuideBlock().show(contextualContainer = contextualContainer,
                                     onCancel = {
 
                                     },
@@ -373,20 +357,23 @@ class MainActivity : AppCompatActivity()
     {
         Contextual.registerGuideBlock(CustomGBTip.GB_KEY).observe(this) { contextualContainer ->
 
-            if ( contextualContainer.guidePayload.guide.guideBlock.contentEquals(CustomGBTip.GB_KEY))
+            if (contextualContainer.guidePayload.guide.guideBlock.contentEquals(CustomGBTip.GB_KEY))
             {
-                CustomGBTip(this@MainActivity,contextualContainer).showCustomTip()
+                CustomGBTip(
+                        this@MainActivity,
+                        contextualContainer
+                ).showCustomTip()
             }
 
 
         }
+
+
     }
 
 
     private fun showExampleCheckListGuideBlock()
     {
-
-
         val guideName = "OpenChecklist"
         Contextual.registerGuideBlock(guideName).observe(this) { contextualContainer ->
             if (contextualContainer.guidePayload.guide.guideBlock.contentEquals(guideName))

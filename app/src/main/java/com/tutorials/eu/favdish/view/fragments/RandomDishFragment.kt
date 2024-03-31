@@ -149,15 +149,14 @@ class RandomDishFragment : Fragment() {
         mBinding!!.tvIngredients.text = ingredients
 
         // The instruction or you can say the Cooking direction text is in the HTML format so we will you the fromHtml to populate it in the TextView.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            mBinding!!.tvCookingDirection.text = Html.fromHtml(
-                recipe.instructions,
-                Html.FROM_HTML_MODE_COMPACT
-            )
-        } else {
-            @Suppress("DEPRECATION")
-            mBinding!!.tvCookingDirection.text = Html.fromHtml(recipe.instructions)
-        }
+
+       runCatching {
+           mBinding!!.tvCookingDirection.text = Html.fromHtml(
+                   recipe.instructions,
+                   Html.FROM_HTML_MODE_COMPACT
+           )
+
+       }
 
         mBinding!!.tvCookingTime.text =
             resources.getString(
