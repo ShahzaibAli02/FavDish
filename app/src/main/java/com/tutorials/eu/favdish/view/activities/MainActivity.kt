@@ -29,6 +29,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.contextu.al.BuildConfig
 import com.contextu.al.Contextual
+import com.contextu.al.appFieldEdit.ui.AppFieldEditGB
 import com.contextu.al.barcodescanner.BarcodeScannerGuideBlock
 import com.contextu.al.carousel.CarouselAction
 import com.contextu.al.carousel.CarouselComponent
@@ -138,6 +139,7 @@ class MainActivity : AppCompatActivity()
             // The Random Dish Fragment is selected when user is redirect in the app via Notification.
             mBinding.navView.selectedItemId = R.id.navigation_random_dish
         } // END
+
         startWork()
 
         val checkedItems = booleanArrayOf(
@@ -164,18 +166,22 @@ class MainActivity : AppCompatActivity()
                             checkedItems
                     ) { dialog, which, isChecked ->
                     }.setPositiveButton("Submit") { dialog, which ->
+
                         val jsonObject = JsonObject()
                         val updatedMultiChoice = arrayListOf<String>()
+
                         checkedItems.forEachIndexed { index, check ->
                             if (check)
                             {
                                 updatedMultiChoice.add(multiChoiceItems[index])
                             }
                         }
+
                         jsonObject.addProperty(
                                 "any-other-custom-data",
                                 "Example custom data"
                         )
+
                         contextualContainer.operations.submitFeedback(
                                 contextualContainer.guidePayload.guide.feedID,
                                 Feedback(
@@ -197,7 +203,10 @@ class MainActivity : AppCompatActivity()
         Contextual.registerGuideBlock(confettiGuideBlocks).observe(this) { contextualContainer ->
             if (contextualContainer.guidePayload.guide.guideBlock.contentEquals(confettiGuideBlocks))
             {
-                val confettiView = ConfettiGuideBlocks(this@MainActivity,contextualContainer)
+                val confettiView = ConfettiGuideBlocks(
+                        this@MainActivity,
+                        contextualContainer
+                )
                 confettiView.show({},
                         {
                             val baseView = findViewById<View>(android.R.id.content)
@@ -211,21 +220,20 @@ class MainActivity : AppCompatActivity()
             if (contextualContainer.guidePayload.guide.guideBlock.contentEquals(fancyAnnouncement))
             {
 
-
-
-                val guideBlock = FancyAnnouncementGuideBlocks(this,contextualContainer)
-                guideBlock.show(
-                        { v: View? ->
-                            guideBlock.dismiss()
-                            contextualContainer.tagManager.setStringTag(
-                                    "test_key",
-                                    "test_value"
-                            )
-                        },
-                        { v: View? ->
-                            guideBlock.dismiss()
-                        }
+                val guideBlock = FancyAnnouncementGuideBlocks(
+                        this,
+                        contextualContainer
                 )
+                guideBlock.show({ v: View? ->
+                    guideBlock.dismiss()
+                    contextualContainer.tagManager.setStringTag(
+                            "test_key",
+                            "test_value"
+                    )
+                },
+                        { v: View? ->
+                            guideBlock.dismiss()
+                        })
             }
         } //
         //        val openChecklist = "OpenChecklist"
@@ -251,6 +259,7 @@ class MainActivity : AppCompatActivity()
 
 
         showTestTipGuideBlock()
+        showAppFieldEditGB()
         launchBarcode()
         launchCarousel()
         launchCircleVideo()
@@ -261,11 +270,15 @@ class MainActivity : AppCompatActivity()
     {
 
         val circleVideoGuideBlocks = "CircleVideo"
-        Contextual.registerGuideBlock(circleVideoGuideBlocks).observe(this){
-            contextualContainer ->
-            if(contextualContainer.guidePayload.guide.guideBlock.contentEquals(circleVideoGuideBlocks)){
-                val circleVideoView = CircleVideoGuideBlock(this@MainActivity,contextualContainer)
-                val contentUrl:String = contextualContainer.guidePayload.guide.contentText.text ?: ""
+        Contextual.registerGuideBlock(circleVideoGuideBlocks).observe(this) { contextualContainer ->
+            if (contextualContainer.guidePayload.guide.guideBlock.contentEquals(circleVideoGuideBlocks))
+            {
+                val circleVideoView = CircleVideoGuideBlock(
+                        this@MainActivity,
+                        contextualContainer
+                )
+                val contentUrl: String = contextualContainer.guidePayload.guide.contentText.text
+                    ?: ""
                 circleVideoView.show(contentUrl)
             }
         }
@@ -274,18 +287,19 @@ class MainActivity : AppCompatActivity()
     fun launchBarcode()
     {
 
-                val barCodeScanner = "BarCodeScanner"
-                Contextual.registerGuideBlock(barCodeScanner).observe(this) { contextualContainer ->
-                    if (contextualContainer.guidePayload.guide.guideBlock.contentEquals(barCodeScanner)) {
-                        BarcodeScannerGuideBlock(
-                            (this)
-                        ) { barcodeResult ->
+        val barCodeScanner = "BarCodeScanner"
+        Contextual.registerGuideBlock(barCodeScanner).observe(this) { contextualContainer ->
+            if (contextualContainer.guidePayload.guide.guideBlock.contentEquals(barCodeScanner))
+            {
+                BarcodeScannerGuideBlock(
+                        (this)
+                ) { barcodeResult ->
 
-                        }.also {
-                            it.showGuideBlock(contextualContainer)
-                        }
-                    }
+                }.also {
+                    it.showGuideBlock(contextualContainer)
                 }
+            }
+        }
     }
 
     fun launchCarousel()
@@ -363,6 +377,28 @@ class MainActivity : AppCompatActivity()
                         this@MainActivity,
                         contextualContainer
                 ).showCustomTip()
+            }
+
+
+        }
+
+
+    }
+
+    private fun showAppFieldEditGB()
+    {
+        Contextual.registerGuideBlock(AppFieldEditGB.GB_KEY).observeForever { contextualContainer ->
+
+            if (contextualContainer.guidePayload.guide.guideBlock.contentEquals(AppFieldEditGB.GB_KEY))
+            {
+                AppFieldEditGB(
+                        this@MainActivity,
+                        contextualContainer
+                ).setOnCompletedListener {
+                    //TODO ON COMPLETE
+                }.setOnDismissListener {
+                    //TODO ON DISMISS
+                }.show() //ANY OPTIONAL PARAMS HERE
             }
 
 

@@ -23,6 +23,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
+import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
@@ -30,6 +31,7 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
+import com.contextu.al.appFieldEdit.utils.AppFieldValidator
 import com.karumi.dexter.Dexter
 import com.karumi.dexter.MultiplePermissionsReport
 import com.karumi.dexter.PermissionToken
@@ -89,6 +91,24 @@ class AddUpdateDishActivity : AppCompatActivity(), View.OnClickListener {
 
         setupActionBar()
 
+        mBinding.etTitle?.doAfterTextChanged {
+            setValidity(it.toString(),2)
+        }
+        mBinding.etType?.doAfterTextChanged {
+            setValidity(it.toString(),3)
+        }
+        mBinding.etCategory?.doAfterTextChanged {
+            setValidity(it.toString(),4)
+        }
+        mBinding.etIngredients?.doAfterTextChanged {
+            setValidity(it.toString(),5)
+        }
+        mBinding.etCookingTime?.doAfterTextChanged {
+            setValidity(it.toString(),6)
+        }
+        mBinding.etDirectionToCook?.doAfterTextChanged {
+            setValidity(it.toString(),7)
+        }
         mFavDishDetails?.let {
             if (it.id != 0) {
                 mImagePath = it.image
@@ -117,6 +137,18 @@ class AddUpdateDishActivity : AppCompatActivity(), View.OnClickListener {
         mBinding.etCookingTime.setOnClickListener(this@AddUpdateDishActivity)
 
         mBinding.btnAddDish.setOnClickListener(this@AddUpdateDishActivity)
+    }
+    fun setValidity(strValue:String,step:Int){
+        val validation= AppFieldValidator().getValidation(step)
+        validation?.regex?.let{regex->
+            AppFieldValidator().setValidValue(step,matchRegex(strValue,regex))
+        }?:run {
+            AppFieldValidator().setValidValue(step,true)
+        }
+    }
+    fun matchRegex(string: String,regex:String): Boolean {
+        val emailRegex = Regex(regex)
+        return emailRegex.matches(string)
     }
 
     override fun onClick(v: View) {
@@ -252,7 +284,7 @@ class AddUpdateDishActivity : AppCompatActivity(), View.OnClickListener {
 
                         if (dishID == 0) {
                             mFavDishViewModel.insert(favDishDetails)
-
+                            AppFieldValidator().nextOrDismiss()
                             Toast.makeText(
                                 this@AddUpdateDishActivity,
                                 "You successfully added your favorite dish details.",
@@ -315,6 +347,8 @@ class AddUpdateDishActivity : AppCompatActivity(), View.OnClickListener {
                     Log.i("ImagePath", mImagePath)
 
                     // Replace the add icon with edit icon once the image is loaded.
+//                    AppFieldValidator().setValidValue(true)
+                    AppFieldValidator().nextOrDismiss()
                     mBinding.ivAddDishImage.setImageDrawable(
                         ContextCompat.getDrawable(
                             this@AddUpdateDishActivity,
@@ -363,6 +397,7 @@ class AddUpdateDishActivity : AppCompatActivity(), View.OnClickListener {
                         .into(mBinding.ivDishImage)
 
                     // Replace the add icon with edit icon once the image is selected.
+                    AppFieldValidator().nextOrDismiss()
                     mBinding.ivAddDishImage.setImageDrawable(
                         ContextCompat.getDrawable(
                             this@AddUpdateDishActivity,
